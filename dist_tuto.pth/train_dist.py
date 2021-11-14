@@ -87,7 +87,7 @@ def partition_dataset():
     partition = DataPartitioner(dataset, partition_sizes)
     partition = partition.use(dist.get_rank())
     train_set = torch.utils.data.DataLoader(
-        partition, batch_size=bsz, shuffle=True)
+        partition, batch_size=(int)(bsz), shuffle=True)
     return train_set, bsz
 
 
@@ -95,7 +95,7 @@ def average_gradients(model):
     """ Gradient averaging. """
     size = float(dist.get_world_size())
     for param in model.parameters():
-        dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+        dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
         param.grad.data /= size
 
 
@@ -117,7 +117,7 @@ def run(rank, size):
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
-            epoch_loss += loss.data[0]
+            epoch_loss += loss.item()
             loss.backward()
             average_gradients(model)
             optimizer.step()
