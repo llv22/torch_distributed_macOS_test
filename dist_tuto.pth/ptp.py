@@ -22,15 +22,18 @@ def run(rank, size):
         """ Simple point-to-point communication. """
         print(dist.get_world_size())
         tensor = torch.ones(1)
-        tensor_list = [torch.zeros(1) for _ in range(size)]
-        dist.gather(tensor, dst=0, gather_list=tensor_list, group=0)
-
-        print('Rank ', rank, ' has data ', sum(tensor_list)[0])
+        # https://github.com/pytorch/pytorch/issues/25463
+        if dist.get_rank() == 0:
+           tensor_list = [torch.zeros(1) for _ in range(size)]
+        else:
+           tensor_list = []
+        dist.gather(tensor, gather_list=tensor_list, dst=0)
+        print('Rank ', rank, ' has data ', sum(tensor_list))
 
 def init_processes(rank, size, fn, backend='gloo'):
     """ Initialize the distributed environment. """
     os.environ['MASTER_ADDR'] = '127.0.0.1'
-    os.environ['MASTER_PORT'] = '29500'
+    os.environ['MASTER_PORT'] = '29504'
     dist.init_process_group(backend, rank=rank, world_size=size)
     fn(rank, size)
 
