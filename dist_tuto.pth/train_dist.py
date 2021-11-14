@@ -87,7 +87,7 @@ def partition_dataset():
     partition = DataPartitioner(dataset, partition_sizes)
     partition = partition.use(dist.get_rank())
     train_set = torch.utils.data.DataLoader(
-        partition, batch_size=bsz, shuffle=True)
+        partition, batch_size=(int)(bsz), shuffle=True)
     return train_set, bsz
 
 
@@ -117,7 +117,7 @@ def run(rank, size):
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
-            epoch_loss += loss.data[0]
+            epoch_loss += loss.item()
             loss.backward()
             average_gradients(model)
             optimizer.step()
